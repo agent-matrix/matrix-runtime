@@ -54,6 +54,13 @@ jobs:
           DEPLOY_DIR=$(mktemp -d)
           echo "📦 Building deploy tree in ${DEPLOY_DIR} ..."
 
+          # Ship the FULL repo so the Space builds exactly this commit
+          # (self-contained — no GitHub clone, no branch/cache drift), then
+          # overlay the hf/ files (HF README front-matter, launcher, Dockerfile)
+          # at the root. docs/ is dropped (PNGs would require Git LFS on HF).
+          git archive --format=tar HEAD | tar -x -C "${DEPLOY_DIR}"
+          rm -rf "${DEPLOY_DIR}/legacy" "${DEPLOY_DIR}/bin" "${DEPLOY_DIR}/coverage.out" \
+                 "${DEPLOY_DIR}/.github" "${DEPLOY_DIR}/docs"
           cp -r hf/. "${DEPLOY_DIR}/"
 
           cd "${DEPLOY_DIR}"

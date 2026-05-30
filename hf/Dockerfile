@@ -1,19 +1,15 @@
 # MatrixCloud — Hugging Face Docker Space
 #
-# Builds the matrix-runtime binary from source and serves the API + embedded
-# console on port 7860 (HF's default app port). The launcher app/main.py sets
-# up the environment and execs the binary.
-#
-# REF selects which git ref of agent-matrix/matrix-runtime to build. The deploy
-# script (scripts/deploy-hf-space.sh) rewrites it to the exact ref you deploy;
-# the GitHub workflow leaves it at the default below.
+# Self-contained: builds matrix-runtime from the source shipped in this Space
+# repo (the deploy script / workflow push the full repo here). It does NOT clone
+# GitHub, so it always builds exactly the committed code — no branch/cache drift.
+# Serves the API + embedded console on port 7860 (HF's default app port); the
+# launcher app/main.py preps the environment and execs the binary.
 
 # ---- build ----
 FROM golang:1.24-bookworm AS build
-ARG REF=main
-RUN git clone --depth 1 --branch "${REF}" https://github.com/agent-matrix/matrix-runtime /src \
- || git clone --depth 1 https://github.com/agent-matrix/matrix-runtime /src
 WORKDIR /src
+COPY . .
 RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/matrix-runtime ./cmd/matrix-runtime
 
 # ---- runtime ----
@@ -21,7 +17,6 @@ FROM debian:bookworm-slim
 RUN apt-get update && apt-get install -y --no-install-recommends \
       ca-certificates curl git nodejs npm python3 python3-pip pipx \
     && rm -rf /var/lib/apt/lists/*
-
 COPY --from=build /out/matrix-runtime /usr/local/bin/matrix-runtime
 COPY requirements.txt /app/requirements.txt
 RUN pip3 install --no-cache-dir --break-system-packages -r /app/requirements.txt
