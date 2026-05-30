@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -37,6 +38,31 @@ type Store struct {
 	box    *auth.SecretBox
 	pg     bool
 	schema string
+	tblRe  *regexp.Regexp
+}
+
+// pgTables are the tables MatrixCloud owns. On Postgres every reference to them
+// is schema-qualified (qualify) so we never depend on search_path — which
+// Neon's connection pooler does not preserve — and never collide with other
+// apps that share the database (e.g. admin.matrixhub.io's own `users` table).
+var pgTables = []string{
+	"model_runtime_installations", "runtime_join_tokens", "provider_credentials",
+	"email_verifications", "password_resets", "model_profiles", "usage_events",
+	"audit_events", "workspaces", "sessions", "runtimes", "users",
+}
+
+func compileTableRe() *regexp.Regexp {
+	return regexp.MustCompile(`\b(` + strings.Join(pgTables, "|") + `)\b`)
+}
+
+// qualify rewrites bare table names to "<schema>.<table>" for Postgres. Word
+// boundaries keep it from touching columns/index names (e.g. workspace_id,
+// idx_users_workspace). No-op for SQLite.
+func (s *Store) qualify(q string) string {
+	if !s.pg || s.tblRe == nil {
+		return q
+	}
+	return s.tblRe.ReplaceAllString(q, s.schema+`.${1}`)
 }
 
 // rb rewrites "?" placeholders to "$N" for Postgres; no-op for SQLite.
@@ -58,9 +84,13 @@ func (s *Store) rb(q string) string {
 	return b.String()
 }
 
-func (s *Store) exec(q string, a ...any) (sql.Result, error) { return s.db.Exec(s.rb(q), a...) }
-func (s *Store) query(q string, a ...any) (*sql.Rows, error) { return s.db.Query(s.rb(q), a...) }
-func (s *Store) queryRow(q string, a ...any) *sql.Row        { return s.db.QueryRow(s.rb(q), a...) }
+func (s *Store) exec(q string, a ...any) (sql.Result, error) {
+	return s.db.Exec(s.rb(s.qualify(q)), a...)
+}
+func (s *Store) query(q string, a ...any) (*sql.Rows, error) {
+	return s.db.Query(s.rb(s.qualify(q)), a...)
+}
+func (s *Store) queryRow(q string, a ...any) *sql.Row { return s.db.QueryRow(s.rb(s.qualify(q)), a...) }
 
 // User is a row in the users table joined with its workspace.
 type User struct {
@@ -131,7 +161,7 @@ func OpenPostgres(dsn, schema, secretDir string) (*Store, error) {
 		_ = db.Close()
 		return nil, fmt.Errorf("secret key: %w", err)
 	}
-	s := &Store{db: db, box: box, pg: true, schema: schema}
+	s := &Store{db: db, box: box, pg: true, schema: schema, tblRe: compileTableRe()}
 	if _, err := db.Exec(`CREATE SCHEMA IF NOT EXISTS ` + quoteIdent(schema)); err != nil {
 		_ = db.Close()
 		return nil, fmt.Errorf("create schema %q: %w", schema, err)
@@ -157,7 +187,7 @@ func (s *Store) migrate() error {
 	// Execute statements individually: pgx's extended protocol rejects
 	// multi-statement Exec, and it keeps errors precise on both drivers.
 	for _, stmt := range splitStatements(schema) {
-		if _, err := s.db.Exec(stmt); err != nil {
+		if _, err := s.db.Exec(s.qualify(stmt)); err != nil {
 			return fmt.Errorf("migrate: %w", err)
 		}
 	}
@@ -218,13 +248,13 @@ func (s *Store) Signup(name, email, password, workspaceName string) (*User, erro
 	}
 	defer func() { _ = tx.Rollback() }()
 
-	if _, err := tx.Exec(s.rb(`INSERT INTO workspaces(id,name,slug,created_at) VALUES(?,?,?,?)`),
+	if _, err := tx.Exec(s.rb(s.qualify(`INSERT INTO workspaces(id,name,slug,created_at) VALUES(?,?,?,?)`)),
 		ws.ID, ws.Name, ws.Slug, now.Format(time.RFC3339)); err != nil {
 		return nil, err
 	}
 	u := &User{ID: auth.NewID("usr_"), WorkspaceID: ws.ID, WorkspaceName: ws.Name, WorkspaceSlug: ws.Slug,
 		Name: strings.TrimSpace(name), Email: email, Role: "Owner", CreatedAt: now}
-	if _, err := tx.Exec(s.rb(`INSERT INTO users(id,workspace_id,name,email,password_hash,role,created_at) VALUES(?,?,?,?,?,?,?)`),
+	if _, err := tx.Exec(s.rb(s.qualify(`INSERT INTO users(id,workspace_id,name,email,password_hash,role,created_at) VALUES(?,?,?,?,?,?,?)`)),
 		u.ID, u.WorkspaceID, u.Name, u.Email, hash, u.Role, now.Format(time.RFC3339)); err != nil {
 		return nil, err
 	}
