@@ -285,7 +285,6 @@ with MatrixCloud("http://localhost:8080") as mc:
     mc.login("you@acme.io", "secret123")
     print(mc.inspect_model("hf:Qwen/Qwen2.5-7B-Instruct")["recommended_runtime"])
 ```
-
 ---
 
 ## 🛡️ Security
