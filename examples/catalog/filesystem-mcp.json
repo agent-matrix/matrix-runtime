@@ -1,0 +1,12 @@
+{
+  "id": "mcp_server:filesystem",
+  "name": "Filesystem MCP Server",
+  "kind": "MCP Server",
+  "runtime": "node",
+  "transport": "stdio",
+  "sandbox": true,
+  "start_command": "npx -y @modelcontextprotocol/server-filesystem /tmp",
+  "source": "@modelcontextprotocol/server-filesystem",
+  "license": "MIT",
+  "desc": "Read/write files under an allowed root. Good first sandbox to test mcp.test."
+}

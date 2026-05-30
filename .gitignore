@@ -1,0 +1,31 @@
+# Build output
+/bin/
+/dist/
+/.devdata/
+
+# Test / coverage artifacts
+coverage.out
+coverage.html
+
+# Local runtime data
+/var/lib/matrix-runtime/
+
+# Editor / OS
+*.swp
+.DS_Store
+
+# Local secrets / generated k8s secret
+deploy/k8s/secret.yaml
+deploy/docker-compose/.env
+
+# Python (clients/python) — keep uv.lock, ignore envs/caches/builds
+.venv/
+**/.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+*.egg-info/
+clients/python/dist/
+clients/python/build/

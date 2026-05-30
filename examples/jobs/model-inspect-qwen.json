@@ -1,0 +1,8 @@
+{
+  "type": "model.inspect",
+  "ttl_seconds": 60,
+  "payload": {
+    "model": "hf:Qwen/Qwen2.5-7B-Instruct",
+    "revision": "main"
+  }
+}

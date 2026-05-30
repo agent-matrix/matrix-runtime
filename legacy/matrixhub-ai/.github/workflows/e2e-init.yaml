@@ -1,0 +1,107 @@
+name: Call E2E
+
+env:
+  CLUSTER_NAME: matrixhub-e2e
+  E2E_TIME_OUT: 30m
+  KIND_VERSION: v1.32.3
+
+on:
+  workflow_call:
+    inputs:
+      image_tag:
+        required: true
+        type: string
+      ref:
+        required: false
+        type: string
+      e2e_labels:
+        required: false
+        type: string
+        default: smoke
+      k8s_version:
+        required: false
+        type: string
+        default: v1.32.3
+
+jobs:
+  call_e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Show system info
+        run: |
+          echo "=========Current system kernel================="
+          uname -r
+          echo "=========K8s version================="
+          echo "${{ inputs.k8s_version }}"
+
+      - name: Download matrixhub image
+        uses: actions/download-artifact@v4.2.1
+        with:
+          name: matrixhub-ci-image-${{ inputs.image_tag }}
+          path: /tmp
+
+      - name: Load matrixhub image
+        run: |
+          echo "=== Checking downloaded artifact ==="
+          ls -lh /tmp/
+
+          echo ""
+          echo "=== Loading image from tar ==="
+          docker load -i /tmp/matrixhub-ci.tar
+
+          echo ""
+          echo "=== Listing all Docker images ==="
+          docker images
+
+          echo ""
+          echo "=== Searching for matrixhub images ==="
+          docker images | grep -i matrixhub || echo "No matrixhub images found!"
+
+      - name: Prepare
+        run: |
+          echo "ref: ${{ inputs.ref }}"
+          echo "===== image ====="
+          REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          echo "ci image tag: ghcr.io/${REPO_LOWER}/matrixhub-ci:${{ inputs.image_tag }}"
+          echo "IMAGE_REPO_LOWER=${REPO_LOWER}" >> $GITHUB_ENV
+
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          ref: ${{ inputs.ref }}
+
+      - name: Setup Golang
+        uses: actions/setup-go@v6
+        with:
+          go-version: 1.25.0
+
+      - name: Install Tools
+        run: |
+          # Install kind (use latest version to support containerd v2)
+          go install sigs.k8s.io/kind@v0.31.0
+
+          # Install helm
+          curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+          chmod 700 get_helm.sh
+          ./get_helm.sh
+
+          # Install ginkgo
+          go install github.com/onsi/ginkgo/v2/ginkgo@latest
+
+          # Verify tools
+          kind version
+          helm version
+          ginkgo version
+
+      - name: Run E2E Test
+        id: run_e2e
+        continue-on-error: false
+        run: |
+          make test.e2e.kind -e E2E_CLUSTER_NAME=${{ env.CLUSTER_NAME }} \
+              -e E2E_MATRIXHUB_IMAGE=ghcr.io/${{ env.IMAGE_REPO_LOWER }}/matrixhub-ci:${{ inputs.image_tag }} \
+              -e E2E_KIND_IMAGE_TAG=${{ inputs.k8s_version }}
+      - name: Cleanup Kind Cluster
+        if: always()
+        run: |
+          kind delete cluster --name=${{ env.CLUSTER_NAME }} || true

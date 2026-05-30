@@ -1,0 +1,10 @@
+{
+  "source_type": "huggingface",
+  "provider": "Hugging Face",
+  "external_id": "Qwen/Qwen2.5-7B-Instruct",
+  "display_name": "Qwen2.5 7B Instruct",
+  "task": "text-generation",
+  "library": "transformers",
+  "license": "apache-2.0",
+  "tags": ["llm", "instruct", "chat"]
+}

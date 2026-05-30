@@ -1,0 +1,9 @@
+# Local development inside a cluster (e.g. kind/minikube).
+runtime:
+  mode: local-dev
+  maxConcurrentJobs: 2
+persistence:
+  enabled: false
+service:
+  type: NodePort
+  port: 8080

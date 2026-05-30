@@ -1,0 +1,14 @@
+# Hugging Face Space mode: single concurrent short-lived MCP sandbox.
+runtime:
+  mode: hf-space
+  maxConcurrentJobs: 1
+  maxTTLSeconds: 600
+persistence:
+  enabled: false
+resources:
+  requests:
+    cpu: 250m
+    memory: 512Mi
+  limits:
+    cpu: "1"
+    memory: 2Gi

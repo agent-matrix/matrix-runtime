@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: matrix-runtime
+  namespace: matrix-runtime
+  labels:
+    app: matrix-runtime
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: matrix-runtime
+  template:
+    metadata:
+      labels:
+        app: matrix-runtime
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        fsGroup: 10001
+      containers:
+        - name: matrix-runtime
+          image: ghcr.io/agent-matrix/matrix-runtime:latest
+          args: ["--mode", "customer-agent"]
+          ports:
+            - name: http
+              containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: matrix-runtime
+            - secretRef:
+                name: matrix-runtime
+          livenessProbe:
+            httpGet:
+              path: /v1/health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /v1/health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1Gi
+            limits:
+              cpu: "2"
+              memory: 4Gi
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/matrix-runtime
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: matrix-runtime-data

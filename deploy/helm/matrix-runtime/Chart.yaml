@@ -1,0 +1,16 @@
+apiVersion: v2
+name: matrix-runtime
+description: Matrix Runtime — the execution plane for Matrix Cloud (MCP sandboxes, agents, tools, model jobs).
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords:
+  - matrix
+  - mcp
+  - runtime
+  - execution-plane
+home: https://github.com/agent-matrix/matrix-runtime
+sources:
+  - https://github.com/agent-matrix/matrix-runtime
+maintainers:
+  - name: agent-matrix

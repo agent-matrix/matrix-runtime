@@ -1,0 +1,76 @@
+{
+  "new": "创建模型",
+  "list": {
+    "project": "项目",
+    "library": "框架",
+    "task": "任务",
+    "placeholder": {
+      "modelName": "模型名称",
+      "task": "输入任务名称搜索",
+      "library": "输入框架名称搜索",
+      "project": "输入项目名称搜索"
+    },
+    "recommend": "推荐模型",
+    "allModels": "全部模型",
+    "viewMore": "查看更多",
+    "collapse": "收起"
+  },
+  "detail": {
+    "upload": "上传模型文件",
+    "download": "下载模型文件",
+    "use": "使用此模型",
+    "desc": "模型介绍",
+    "tree": "模型文件",
+    "setting": "模型设置",
+    "history": "{{count}} 条提交",
+    "commandDialog": {
+      "upload": {
+        "title": "上传模型文件",
+        "description": "运行以下命令将本地文件上传到该模型。"
+      },
+      "download": {
+        "title": "下载模型文件",
+        "description": "运行以下命令下载该模型。"
+      },
+      "use": {
+        "title": "使用此模型",
+        "description": "运行以下命令通过 vLLM 启动该模型。"
+      }
+    }
+  },
+  "settings": {
+    "delete": {
+      "title": "删除模型",
+      "warning": "此操作无法撤销。这将永久删除 {{name}} 模型库及其所有文件，包括权重。",
+      "confirmation": "请输入 {{name}}",
+      "action": "删除模型",
+      "success": "模型删除成功",
+      "error": "模型删除失败"
+    },
+    "recommended": {
+      "title": "热门模型",
+      "set": {
+        "label": "设为热门模型",
+        "confirmation": "确定要设置模型 {{name}} 为热门模型吗？",
+        "success": "设为热门模型成功",
+        "error": "设为热门模型失败"
+      },
+      "unset": {
+        "label": "取消热门模型",
+        "confirmation": "确定要取消 {{name}} 的热门模型状态吗？",
+        "success": "取消热门模型成功",
+        "error": "取消热门模型失败"
+      }
+    }
+  },
+  "create": {
+    "modelName": "模型名称",
+    "modelNamePlaceholder": "请输入模型名称",
+    "modelNameHelper": "支持数字、字母、下划线、短横线和点，且只能以数字、字母开头",
+    "submit": "创建模型",
+    "uploadTip": "模型创建完成后，您可以使用命令行上传文件。",
+    "modelNameInvalid": "模型名称格式不正确",
+    "success": "模型创建成功",
+    "error": "创建模型失败"
+  }
+}

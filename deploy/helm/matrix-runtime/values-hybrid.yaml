@@ -1,0 +1,11 @@
+# Hybrid cloud: runtime in customer infrastructure dialing out to MatrixHub Cloud.
+runtime:
+  mode: customer-agent
+  maxConcurrentJobs: 5
+  # Provide via: --set runtime.joinToken=mxrt_xxxxx
+  joinToken: ""
+cloud:
+  url: https://cloud.matrixhub.io
+persistence:
+  enabled: true
+  size: 20Gi

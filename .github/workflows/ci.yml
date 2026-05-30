@@ -1,0 +1,75 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+permissions:
+  contents: read
+
+env:
+  # Pin to the toolchain set up below; never auto-download a different one.
+  GOTOOLCHAIN: local
+
+jobs:
+  go:
+    name: Build & test (Go)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.24"
+          cache: true
+
+      - name: gofmt (check)
+        run: make fmt-check
+
+      - name: go vet
+        run: make vet
+
+      - name: go test (race + coverage)
+        run: make test
+
+      - name: go build
+        run: make build
+
+      - name: Smoke (version/ready/health endpoints)
+        run: |
+          ./bin/matrix-runtime --mode local-dev --port 18080 &
+          PID=$!
+          for i in $(seq 1 30); do
+            curl -fsS http://localhost:18080/v1/health && break || sleep 1
+          done
+          curl -fsS http://localhost:18080/v1/version
+          curl -fsS http://localhost:18080/v1/ready || true   # 503 acceptable; just must respond
+          curl -fsS http://localhost:18080/v1/capabilities
+          kill $PID 2>/dev/null || true
+
+  docker:
+    name: Docker image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image
+        run: |
+          docker build \
+            --build-arg VERSION="ci-${GITHUB_SHA::7}" \
+            --build-arg COMMIT="${GITHUB_SHA::7}" \
+            --build-arg BUILD_DATE="$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            -t matrix-runtime:ci .
+
+  helm:
+    name: Helm chart
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/setup-helm@v4
+        with:
+          version: latest
+      - name: helm lint
+        run: helm lint ./deploy/helm/matrix-runtime
+      - name: helm template
+        run: helm template matrix-runtime ./deploy/helm/matrix-runtime

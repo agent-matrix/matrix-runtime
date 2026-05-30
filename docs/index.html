@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Matrix Cloud — Run AI agents inside your own Matrix</title>
+<meta name="description" content="Matrix Cloud is the platform for verified AI agents, MCP servers, tools and models. A SaaS control plane orchestrates jobs; Matrix Runtime executes them inside your own infrastructure — secrets never leave." />
+<meta property="og:title" content="Matrix Cloud — Run AI agents inside your own Matrix" />
+<meta property="og:description" content="Verified MCP servers, agents, tools and models. Control plane in the cloud, execution plane in your infrastructure." />
+<meta property="og:type" content="website" />
+<meta name="theme-color" content="#000402" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="assets/site.css" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%23010604'/%3E%3Cpath d='M50 20l26 15-26 15-26-15z' fill='none' stroke='%2300ff66' stroke-width='4' stroke-linejoin='round'/%3E%3Cpath d='M24 50l26 15 26-15M24 64l26 15 26-15' fill='none' stroke='%2300ff66' stroke-width='4' stroke-linejoin='round' opacity='0.6'/%3E%3C/svg%3E" />
+</head>
+<body class="flicker">
+
+<canvas id="rain-canvas" aria-hidden="true"></canvas>
+<div class="crt" aria-hidden="true"></div>
+
+<!-- ============ NAV ============ -->
+<header class="nav" id="nav">
+  <div class="nav-inner">
+    <a class="brand" href="#top" aria-label="Matrix Cloud home">
+      <span class="mark">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="m12 2 9 5-9 5-9-5z"/><path d="m3 12 9 5 9-5"/><path d="m3 17 9 5 9-5"/></svg>
+      </span>
+      <span>
+        <p class="nm">MATRIX CLOUD</p>
+        <p class="sub">execution plane</p>
+      </span>
+    </a>
+    <nav class="nav-links">
+      <a href="#platform">Platform</a>
+      <a href="#capabilities">Capabilities</a>
+      <a href="#hybrid">Hybrid</a>
+      <a href="#install">Install</a>
+      <a href="https://github.com/agent-matrix/matrix-runtime" target="_blank" rel="noopener">Docs ↗</a>
+    </nav>
+    <div class="nav-cta">
+      <a class="btn btn-primary btn-sm hide-sm" href="#install">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
+        Get started
+      </a>
+      <button class="menu-toggle" id="menu-toggle" aria-label="Menu">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main id="top">
+
+<!-- ============ HERO ============ -->
+<section class="hero">
+  <div class="hero-bloom"></div>
+  <div class="hero-fade"></div>
+  <div class="hero-inner">
+    <div class="badge reveal in"><span class="dot"></span> Verified AI infrastructure · Matrix Runtime live</div>
+    <h1>
+      <span data-decode="Run AI agents inside">Run AI agents inside</span><br />
+      <span data-decode="your own Matrix.">your own Matrix.</span>
+    </h1>
+    <p class="lede reveal" data-delay="120">Matrix Cloud is the platform for verified MCP servers, agents, tools and models. The control plane orchestrates; <strong style="color:var(--green-text)">Matrix Runtime</strong> executes jobs inside your infrastructure — secrets, internal APIs and model access never leave.</p>
+    <div class="actions reveal" data-delay="220">
+      <a class="btn btn-primary" href="#install">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4l14 8-14 8z"/></svg>
+        Get started
+      </a>
+      <a class="btn btn-ghost" href="https://github.com/agent-matrix/matrix-runtime" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.58 2 12.25c0 4.53 2.87 8.37 6.84 9.73.5.1.68-.22.68-.49 0-.24-.01-.87-.01-1.71-2.78.62-3.37-1.37-3.37-1.37-.45-1.18-1.11-1.5-1.11-1.5-.91-.64.07-.62.07-.62 1 .07 1.53 1.06 1.53 1.06.89 1.56 2.34 1.11 2.91.85.09-.66.35-1.11.63-1.37-2.22-.26-4.56-1.14-4.56-5.07 0-1.12.39-2.03 1.03-2.75-.1-.26-.45-1.3.1-2.7 0 0 .84-.28 2.75 1.05a9.4 9.4 0 0 1 5 0c1.91-1.33 2.75-1.05 2.75-1.05.55 1.4.2 2.44.1 2.7.64.72 1.03 1.63 1.03 2.75 0 3.94-2.34 4.81-4.57 5.06.36.32.68.94.68 1.9 0 1.37-.01 2.47-.01 2.81 0 .27.18.6.69.49A10.26 10.26 0 0 0 22 12.25C22 6.58 17.52 2 12 2z"/></svg>
+        View on GitHub
+      </a>
+    </div>
+    <div class="term reveal" data-delay="300">
+      <div class="terminal">
+        <div class="bar">
+          <span class="dots"><i></i><i></i><i></i></span>
+          <span class="ttl">matrix-runtime</span>
+          <button class="btn btn-ghost btn-sm copy" data-copy="#hero-cmd">copy</button>
+        </div>
+        <pre id="hero-cmd"><span class="c-prompt">$ </span><span class="c-cmd">curl</span> <span class="c-flag">-s</span> localhost:8080/v1/capabilities | jq .capabilities
+[ <span class="c-cmd">"mcp.test"</span>, <span class="c-cmd">"mcp.run"</span>, <span class="c-cmd">"model.inspect"</span>, <span class="c-cmd">"model.pull"</span>, <span class="c-cmd">"agent.run"</span>, <span class="c-cmd">"tool.run"</span> ]
+<span class="c-prompt">$ </span><span class="c-cmd">matrix-runtime</span> <span class="c-flag">--mode</span> customer-agent  <span class="c-cmt"># outbound-only · no inbound ports</span><span class="cursor"></span></pre>
+      </div>
+    </div>
+    <div class="cue reveal" data-delay="380">
+      scroll to explore
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+    </div>
+  </div>
+</section>
+
+<!-- ============ STATS ============ -->
+<section class="wrap" style="padding-bottom: 24px;">
+  <div class="panel grid cols-4 reveal" style="padding: 8px;">
+    <div class="stat"><div class="v">10 min</div><div class="l">MCP sandbox TTL</div></div>
+    <div class="stat"><div class="v">4</div><div class="l">runtime modes</div></div>
+    <div class="stat"><div class="v">6</div><div class="l">job capabilities</div></div>
+    <div class="stat"><div class="v">0</div><div class="l">inbound ports</div></div>
+  </div>
+</section>
+
+<!-- ============ PLATFORM / PLANES ============ -->
+<section class="block" id="platform">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <p class="kicker">// system architecture</p>
+      <h2>One platform, two planes</h2>
+      <p>MatrixHub Cloud is the SaaS control plane — catalog, workspaces, jobs and policies. Matrix Runtime is the execution plane that runs inside your network. The model gateway routes every model call; the CLI drives it all.</p>
+    </div>
+    <div class="grid cols-4 arch-split" style="margin-top: 36px;">
+      <div class="plane reveal" data-delay="0">
+        <span class="lab">control plane</span>
+        <h3>matrix-hub</h3>
+        <p>Catalog, workspaces, jobs, policies and approvals. Remains SaaS — the brain of the platform.</p>
+        <span class="repo">▸ ruslanmv/matrixhub</span>
+      </div>
+      <div class="plane reveal" data-delay="70" style="border-color: var(--line-strong); box-shadow: 0 0 40px var(--glow-soft);">
+        <span class="lab" style="color: var(--green)">execution plane</span>
+        <h3>matrix-runtime</h3>
+        <p>Runs MCP servers, agents, tools, sandboxes and model jobs — in your infrastructure, outbound-only.</p>
+        <span class="repo">▸ agent-matrix/matrix-runtime</span>
+      </div>
+      <div class="plane reveal" data-delay="140">
+        <span class="lab">model gateway</span>
+        <h3>matrix-llm</h3>
+        <p>OpenAI-compatible routing and resolution across Hugging Face, vLLM, Ollama and hosted providers.</p>
+        <span class="repo">▸ agent-matrix/matrix-llm</span>
+      </div>
+      <div class="plane reveal" data-delay="210">
+        <span class="lab">operator</span>
+        <h3>matrix-cli</h3>
+        <p>Keyboard-native, deterministic, auditable. Build, inspect, install and orchestrate AI stacks.</p>
+        <span class="repo">▸ agent-matrix/matrix-cli</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CAPABILITIES ============ -->
+<section class="block" id="capabilities" style="padding-top: 0;">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <p class="kicker">// what the runtime does</p>
+      <h2>Verified execution, by job type</h2>
+      <p>Every unit of work is a typed, TTL-bounded job that streams lifecycle events. Test before you trust.</p>
+    </div>
+    <div class="grid cols-3" style="margin-top: 36px;">
+      <div class="feature reveal" data-delay="0">
+        <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4l14 8-14 8z"/></svg></span>
+        <h3>10-minute sandboxes</h3>
+        <p>Spin up any MCP server over stdio, run <span class="mono">initialize</span> and <span class="mono">tools/list</span>, call tools live, then auto-expire. No production secrets.</p>
+        <div class="tags"><span class="chip">mcp.test</span><span class="chip">stdio</span></div>
+      </div>
+      <div class="feature reveal" data-delay="70">
+        <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></span>
+        <h3>Jobs &amp; live events</h3>
+        <p>Server-Sent Events stream every step — <span class="mono">validate → ready</span> — with status, logs and results, cancellable mid-flight.</p>
+        <div class="tags"><span class="chip blue">SSE</span><span class="chip">agent.run</span><span class="chip">tool.run</span></div>
+      </div>
+      <div class="feature reveal" data-delay="140">
+        <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v2M15 2v2M9 20v2M15 20v2M2 9h2M2 15h2M20 9h2M20 15h2"/><rect x="9.5" y="9.5" width="5" height="5" rx="1"/></svg></span>
+        <h3>Model inspection</h3>
+        <p>Resolve <span class="mono">hf:Qwen/Qwen2.5-7B-Instruct</span> to pipeline, library, license, parameter estimate and a recommended runtime.</p>
+        <div class="tags"><span class="chip amber">model.inspect</span><span class="chip">vLLM</span></div>
+      </div>
+      <div class="feature reveal" data-delay="0">
+        <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></svg></span>
+        <h3>Policy &amp; governance</h3>
+        <p>Command allow-lists, TTL ceilings, raw-secret rejection and blocked egress — enforced before a process ever starts.</p>
+        <div class="tags"><span class="chip">allow-list</span><span class="chip">no curl|bash</span></div>
+      </div>
+      <div class="feature reveal" data-delay="70">
+        <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="13" width="18" height="7" rx="2"/><path d="M7 7.5h.01M7 16.5h.01"/></svg></span>
+        <h3>Fleet of runtimes</h3>
+        <p>Cloud workers, customer agents, Hugging Face Spaces and dev laptops — all reporting health, capabilities and heartbeats.</p>
+        <div class="tags"><span class="chip">heartbeat</span><span class="chip violet">capabilities</span></div>
+      </div>
+      <div class="feature reveal" data-delay="140">
+        <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m12 2 9 5-9 5-9-5z"/><path d="m3 12 9 5 9-5"/><path d="m3 17 9 5 9-5"/></svg></span>
+        <h3>Console &amp; MatrixShell</h3>
+        <p>A premium control surface served from the runtime binary, gated by multitenant login — plus MatrixShell, an AI-assisted operator terminal wired to the live API.</p>
+        <div class="tags"><span class="chip">embedded</span><span class="chip blue">MatrixShell</span><span class="chip">multitenant</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ HYBRID ============ -->
+<section class="block" id="hybrid" style="padding-top: 0;">
+  <div class="wrap">
+    <div class="panel glow reveal" style="padding: clamp(24px,4vw,44px);">
+      <div class="grid arch-split" style="grid-template-columns: 0.9fr 1.1fr; gap: 36px; align-items: center;">
+        <div>
+          <p class="kicker">// hybrid cloud</p>
+          <h2 style="font-family:var(--font-disp); font-weight:700; font-size:clamp(24px,3.4vw,38px); letter-spacing:-0.03em; color:var(--green-bright); margin:12px 0 0;">Your secrets never leave</h2>
+          <p style="margin:16px 0 0; font-size:14px; line-height:1.7; color:var(--green-dim); max-width:440px;">The control plane stays SaaS. The runtime lives in your infrastructure and dials <strong style="color:var(--green-text)">outbound only</strong> — no inbound firewall holes. Execution, secrets, internal APIs and model access all stay local.</p>
+          <div style="margin-top:20px; display:grid; gap:10px;">
+            <div style="display:flex; align-items:center; gap:9px; font-size:13px; color:var(--green-text);"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Outbound-only tunnel</div>
+            <div style="display:flex; align-items:center; gap:9px; font-size:13px; color:var(--green-text);"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Secrets stay on-prem</div>
+            <div style="display:flex; align-items:center; gap:9px; font-size:13px; color:var(--green-text);"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Signed image · audited control channel</div>
+          </div>
+        </div>
+        <div class="flow">
+          <div class="node"><div class="t">control plane</div><div class="v">MatrixHub Cloud</div><span class="chip" style="margin-top:10px;">SaaS</span></div>
+          <div class="arrow"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></div>
+          <div class="node" style="border-color:var(--line-strong);"><div class="t" style="color:var(--green)">execution plane</div><div class="v">Your infrastructure</div><span class="chip" style="margin-top:10px;">Matrix Runtime</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ INSTALL ============ -->
+<section class="block" id="install" style="padding-top: 0;">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <p class="kicker">// get started</p>
+      <h2>Run a runtime in minutes</h2>
+      <p>Local, Docker, Kubernetes/Helm or a Hugging Face Space. The runtime registers itself and appears online with its capabilities.</p>
+    </div>
+    <div class="grid arch-split reveal" style="grid-template-columns: 1.25fr 0.75fr; gap: 16px; margin-top: 28px;">
+      <div>
+        <div class="tabs" id="install-tabs"></div>
+        <div class="terminal">
+          <div class="bar">
+            <span class="dots"><i></i><i></i><i></i></span>
+            <span class="ttl">install</span>
+            <button class="btn btn-ghost btn-sm copy" data-copy="#install-code">copy</button>
+          </div>
+          <pre id="install-code"></pre>
+        </div>
+      </div>
+      <div class="panel" style="padding: 22px;">
+        <h3 style="margin:0; font-family:var(--font-disp); font-size:17px; color:var(--green-bright);">Then open the console</h3>
+        <p style="margin:10px 0 0; font-size:13px; line-height:1.6; color:var(--green-dim);">The runtime serves a premium enterprise console at <span class="mono" style="color:var(--green-text)">/</span> — browse the catalog, start a live 10-minute sandbox, watch SSE events and call tools, all wired to the real API.</p>
+        <div style="margin-top:16px; display:grid; gap:9px;">
+          <span class="chip">mcp.test</span>
+          <span class="chip blue">model.inspect</span>
+          <span class="chip violet">sandbox · live</span>
+        </div>
+        <a class="btn btn-ghost btn-sm" style="margin-top:18px; width:100%;" href="https://github.com/agent-matrix/matrix-runtime/blob/main/docs/console.md" target="_blank" rel="noopener">Console docs ↗</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CTA ============ -->
+<section class="wrap" style="padding-bottom: 96px;">
+  <div class="cta reveal">
+    <div class="grid-tex" style="position:absolute; inset:0; opacity:0.6; pointer-events:none;"></div>
+    <div class="cta-grid">
+      <div>
+        <p class="kicker">// operator layer</p>
+        <h2>Build your AI stack<br/>inside the Matrix.</h2>
+        <p>Browse verified infrastructure, then launch the runtime when you want to test, install and orchestrate AI stacks like an operator — deterministic and auditable.</p>
+      </div>
+      <div style="display:grid; gap:12px; min-width:230px;">
+        <a class="btn btn-primary" href="#install" style="height:52px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
+          Get started
+        </a>
+        <a class="btn btn-ghost" href="https://github.com/agent-matrix/matrix-runtime" target="_blank" rel="noopener" style="height:52px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h4"/></svg>
+          Read the docs
+        </a>
+      </div>
+    </div>
+  </div>
+  <p class="spoon">// there is no spoon</p>
+</section>
+
+</main>
+
+<!-- ============ FOOTER ============ -->
+<footer>
+  <div class="wrap">
+    <div class="foot-grid">
+      <div style="max-width: 280px;">
+        <a class="brand" href="#top" style="margin-bottom:14px;">
+          <span class="mark"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="m12 2 9 5-9 5-9-5z"/><path d="m3 12 9 5 9-5"/><path d="m3 17 9 5 9-5"/></svg></span>
+          <span><p class="nm">MATRIX CLOUD</p><p class="sub">execution plane</p></span>
+        </a>
+        <p style="font-size:12.5px; line-height:1.6; color:var(--green-faint);">Verified AI agents, MCP servers, tools and models. Control plane in the cloud, execution in your infrastructure.</p>
+      </div>
+      <div class="foot-col">
+        <h4>Platform</h4>
+        <a href="#platform">Architecture</a>
+        <a href="#capabilities">Capabilities</a>
+        <a href="#hybrid">Hybrid cloud</a>
+        <a href="#install">Install</a>
+      </div>
+      <div class="foot-col">
+        <h4>Repositories</h4>
+        <a href="https://github.com/agent-matrix/matrix-runtime" target="_blank" rel="noopener">matrix-runtime ↗</a>
+        <a href="https://github.com/ruslanmv/matrixhub" target="_blank" rel="noopener">matrixhub ↗</a>
+        <a href="https://github.com/agent-matrix/matrix-llm" target="_blank" rel="noopener">matrix-llm ↗</a>
+        <a href="https://github.com/agent-matrix/matrix-cli" target="_blank" rel="noopener">matrix-cli ↗</a>
+      </div>
+      <div class="foot-col">
+        <h4>Resources</h4>
+        <a href="https://github.com/agent-matrix/matrix-runtime/blob/main/docs/console.md" target="_blank" rel="noopener">Console</a>
+        <a href="https://github.com/agent-matrix/matrix-runtime/blob/main/docs/install-hybrid.md" target="_blank" rel="noopener">Hybrid install</a>
+        <a href="https://github.com/agent-matrix/matrix-runtime/blob/main/docs/security.md" target="_blank" rel="noopener">Security</a>
+        <a href="https://github.com/agent-matrix/matrix-runtime/blob/main/api/openapi.yaml" target="_blank" rel="noopener">API reference</a>
+      </div>
+    </div>
+    <p class="spoon" style="margin-top:36px;">© <span id="year">2026</span> Matrix Cloud · agent-matrix</p>
+  </div>
+</footer>
+
+<script src="assets/site.js"></script>
+</body>
+</html>

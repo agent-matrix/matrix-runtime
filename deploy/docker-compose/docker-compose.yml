@@ -1,0 +1,26 @@
+services:
+  matrix-runtime:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    image: matrix-runtime:local
+    ports:
+      - "8080:8080"
+    environment:
+      MATRIX_RUNTIME_MODE: ${MATRIX_RUNTIME_MODE:-local-dev}
+      MATRIX_RUNTIME_DATA_DIR: /var/lib/matrix-runtime
+      MATRIX_RUNTIME_MAX_TTL_SECONDS: ${MATRIX_RUNTIME_MAX_TTL_SECONDS:-600}
+      MATRIX_RUNTIME_MAX_CONCURRENT_JOBS: ${MATRIX_RUNTIME_MAX_CONCURRENT_JOBS:-2}
+      MATRIX_CLOUD_URL: ${MATRIX_CLOUD_URL:-https://cloud.matrixhub.io}
+      MATRIX_RUNTIME_JOIN_TOKEN: ${MATRIX_RUNTIME_JOIN_TOKEN:-}
+      HF_TOKEN: ${HF_TOKEN:-}
+    volumes:
+      - matrix-runtime-data:/var/lib/matrix-runtime
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/v1/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  matrix-runtime-data:

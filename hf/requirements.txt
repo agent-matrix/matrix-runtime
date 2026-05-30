@@ -1,0 +1,4 @@
+# Python tooling available inside the Space for model / MCP / MatrixShell jobs.
+# matrix-runtime shells out to these when running sandboxes and model work.
+uv>=0.4
+huggingface_hub>=0.25

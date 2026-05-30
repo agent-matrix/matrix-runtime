@@ -1,0 +1,40 @@
+[Unit]
+Description=Matrix Runtime — execution plane for Matrix Cloud
+Documentation=https://github.com/agent-matrix/matrix-runtime
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=@SERVICE_USER@
+Group=@SERVICE_USER@
+EnvironmentFile=@ENV_FILE@
+ExecStart=@BINDIR@/matrix-runtime
+Restart=on-failure
+RestartSec=3
+TimeoutStopSec=30
+
+# Data directory
+StateDirectory=matrix-runtime
+WorkingDirectory=@DATA_DIR@
+Environment=MATRIX_RUNTIME_DATA_DIR=@DATA_DIR@
+
+# Hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectControlGroups=true
+ProtectKernelModules=true
+ProtectKernelTunables=true
+RestrictNamespaces=true
+RestrictSUIDSGID=true
+LockPersonality=true
+ReadWritePaths=@DATA_DIR@
+# MCP servers spawn child processes (npx/uvx/python); keep exec allowed.
+# Limits
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

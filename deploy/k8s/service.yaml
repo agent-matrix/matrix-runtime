@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: matrix-runtime
+  namespace: matrix-runtime
+  labels:
+    app: matrix-runtime
+spec:
+  type: ClusterIP
+  selector:
+    app: matrix-runtime
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+      protocol: TCP

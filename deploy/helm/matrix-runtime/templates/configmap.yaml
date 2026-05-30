@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "matrix-runtime.fullname" . }}
+  labels:
+    {{- include "matrix-runtime.labels" . | nindent 4 }}
+data:
+  MATRIX_RUNTIME_MODE: {{ .Values.runtime.mode | quote }}
+  MATRIX_RUNTIME_PORT: {{ .Values.service.port | quote }}
+  MATRIX_RUNTIME_DATA_DIR: {{ .Values.runtime.dataDir | quote }}
+  MATRIX_RUNTIME_MAX_TTL_SECONDS: {{ .Values.runtime.maxTTLSeconds | quote }}
+  MATRIX_RUNTIME_MAX_CONCURRENT_JOBS: {{ .Values.runtime.maxConcurrentJobs | quote }}
+  MATRIX_CLOUD_URL: {{ .Values.cloud.url | quote }}
+  {{- with .Values.runtime.id }}
+  MATRIX_RUNTIME_ID: {{ . | quote }}
+  {{- end }}
+  {{- with .Values.runtime.workspace }}
+  MATRIX_RUNTIME_WORKSPACE: {{ . | quote }}
+  {{- end }}

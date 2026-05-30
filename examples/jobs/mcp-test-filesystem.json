@@ -1,0 +1,8 @@
+{
+  "type": "mcp.test",
+  "ttl_seconds": 120,
+  "payload": {
+    "start_command": "npx -y @modelcontextprotocol/server-filesystem /tmp",
+    "env": {}
+  }
+}

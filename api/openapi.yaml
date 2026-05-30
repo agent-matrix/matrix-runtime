@@ -1,0 +1,651 @@
+openapi: 3.0.3
+info:
+  title: Matrix Runtime API
+  description: |
+    Execution plane for Matrix Cloud. Runs MCP sandboxes, inspects Hugging Face
+    models and (in future) agents/tools. Sandboxes are a thin alias over jobs of
+    type mcp.test.
+  version: 0.2.0
+servers:
+  - url: http://localhost:8080
+    description: Local
+security:
+  - bearerAuth: []
+  - {}
+paths:
+  /v1/health:
+    get:
+      summary: Liveness and identity
+      security: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string, example: ok }
+                  runtime_id: { type: string, example: rt_local }
+                  mode: { type: string, example: local-dev }
+                  version: { type: string, example: 0.1.0 }
+  /v1/capabilities:
+    get:
+      summary: Runtime capabilities and limits
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Capabilities"
+  /v1/ready:
+    get:
+      summary: Readiness probe (checks + warnings)
+      security: []
+      responses:
+        "200": { description: Ready }
+        "503": { description: Not ready (a core check failed) }
+  /v1/version:
+    get:
+      summary: Build and version metadata
+      security: []
+      responses:
+        "200": { description: OK }
+  /v1/system/storage:
+    get:
+      summary: Data-directory storage usage and free disk
+      responses:
+        "200": { description: OK }
+  /v1/policies:
+    get:
+      summary: Enforced guardrails (limits + command allow/deny lists)
+      responses:
+        "200": { description: OK }
+  /v1/runtimes:
+    get:
+      summary: Runtimes connected to this control surface
+      responses:
+        "200": { description: OK }
+  /v1/catalog:
+    get:
+      summary: Curated catalog of MCP servers and models
+      responses:
+        "200": { description: OK }
+  /v1/auth/forgot:
+    post:
+      summary: Request a password-reset email (always 200)
+      security: []
+      responses:
+        "200": { description: OK }
+  /v1/auth/reset:
+    post:
+      summary: Set a new password from a reset token
+      security: []
+      responses:
+        "200": { description: OK }
+        "400": { description: Invalid or expired token }
+  /v1/auth/verify:
+    post:
+      summary: Confirm an email-verification token
+      security: []
+      responses:
+        "200": { description: OK }
+  /v1/matrixshell/status:
+    get:
+      summary: MatrixShell install status (403 when disabled)
+      responses:
+        "200": { description: OK }
+        "403": { description: MatrixShell disabled }
+  /v1/matrixshell/install:
+    post:
+      summary: Install MatrixShell into the local sandbox (job)
+      responses:
+        "202": { description: Job accepted }
+        "403": { description: MatrixShell disabled }
+  /v1/matrixshell/exec:
+    post:
+      summary: Run a command in the MatrixShell sandbox (denylisted)
+      responses:
+        "200": { description: OK }
+        "403": { description: Disabled or blocked by denylist }
+  /v1/cloud/runtimes:
+    get:
+      summary: List the workspace's registered runtimes
+      responses:
+        "200": { description: OK }
+  /v1/cloud/runtimes/register:
+    post:
+      summary: Register a runtime using a workspace join token
+      security: []
+      responses:
+        "201": { description: Registered (returns a runtime token) }
+        "401": { description: Invalid join token }
+  /v1/cloud/runtimes/heartbeat:
+    post:
+      summary: Runtime liveness heartbeat (runtime-token auth)
+      security: []
+      responses:
+        "200": { description: OK }
+        "401": { description: Invalid runtime token }
+  /v1/cloud/join-tokens:
+    get:
+      summary: List active join tokens
+      responses:
+        "200": { description: OK }
+    post:
+      summary: Mint a single/limited-use join token
+      responses:
+        "201": { description: Created (secret shown once) }
+  /v1/cloud/providers:
+    get:
+      summary: List BYO provider credentials (hints only)
+      responses:
+        "200": { description: OK }
+    post:
+      summary: Store a BYO provider token (encrypted at rest)
+      responses:
+        "201": { description: Created }
+  /v1/cloud/usage:
+    get:
+      summary: 30-day usage metering by kind
+      responses:
+        "200": { description: OK }
+  /v1/cloud/audit:
+    get:
+      summary: Recent audit events for the workspace
+      responses:
+        "200": { description: OK }
+  /v1/auth/signup:
+    post:
+      summary: Create a workspace + owner account (multitenant)
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, email, password]
+              properties:
+                name: { type: string }
+                email: { type: string, format: email }
+                password: { type: string, minLength: 6 }
+                workspace: { type: string }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AuthResult" }
+        "409": { $ref: "#/components/responses/Error" }
+  /v1/auth/login:
+    post:
+      summary: Authenticate and start a session
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AuthResult" }
+        "401": { $ref: "#/components/responses/Error" }
+  /v1/auth/me:
+    get:
+      summary: Current authenticated user
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user: { $ref: "#/components/schemas/AuthUser" }
+        "401": { $ref: "#/components/responses/Error" }
+  /v1/auth/logout:
+    post:
+      summary: End the current session (?all=true ends every session)
+      responses:
+        "200": { description: OK }
+  /v1/model-sources/huggingface/search:
+    get:
+      summary: Search Hugging Face models (server-side proxy, sorted by downloads)
+      security: []
+      parameters:
+        - { name: q, in: query, schema: { type: string } }
+        - { name: task, in: query, schema: { type: string } }
+        - { name: limit, in: query, schema: { type: integer } }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  live: { type: boolean }
+                  items: { type: array, items: { type: object } }
+  /v1/model-sources/resolve:
+    post:
+      summary: Resolve a source into a model-profile preview (HF resolved live)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                sourceType: { type: string, example: huggingface }
+                externalId: { type: string }
+                model: { type: string }
+                sourceUri: { type: string }
+                provider: { type: string }
+                path: { type: string }
+                branch: { type: string }
+                private: { type: boolean }
+      responses:
+        "200": { description: Profile preview }
+        "502": { $ref: "#/components/responses/Error" }
+  /v1/model-profiles:
+    get:
+      summary: List model profiles for the workspace
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  profiles: { type: array, items: { $ref: "#/components/schemas/ModelProfile" } }
+        "401": { $ref: "#/components/responses/Error" }
+    post:
+      summary: Import (create) a model profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ModelProfileImport" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  profile: { $ref: "#/components/schemas/ModelProfile" }
+        "401": { $ref: "#/components/responses/Error" }
+  /v1/model-profiles/{id}/attach:
+    post:
+      summary: Attach/install a profile onto a runtime (creates a model.attach job)
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [runtimeId]
+              properties:
+                runtimeId: { type: string }
+                installMode: { type: string, enum: [pull_from_source, mount_volume, external_endpoint] }
+                servingEngine: { type: string, example: vLLM }
+      responses:
+        "202":
+          description: Accepted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  installation_id: { type: string }
+                  profile_id: { type: string }
+                  job_id: { type: string }
+                  events_url: { type: string }
+        "404": { $ref: "#/components/responses/Error" }
+  /v1/model-installations:
+    get:
+      summary: List runtime-cache installations for the workspace (with progress)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  installations: { type: array, items: { $ref: "#/components/schemas/ModelInstallation" } }
+        "401": { $ref: "#/components/responses/Error" }
+  /v1/jobs:
+    get:
+      summary: List jobs (newest first)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  jobs:
+                    type: array
+                    items: { $ref: "#/components/schemas/Job" }
+    post:
+      summary: Create a job
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateJobRequest"
+      responses:
+        "202":
+          description: Accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateJobResponse"
+        "400": { $ref: "#/components/responses/Error" }
+        "422": { $ref: "#/components/responses/Error" }
+  /v1/jobs/{job_id}:
+    parameters:
+      - $ref: "#/components/parameters/JobID"
+    get:
+      summary: Read a job
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Job"
+        "404": { $ref: "#/components/responses/Error" }
+    delete:
+      summary: Cancel/delete a job
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                  status: { type: string }
+        "404": { $ref: "#/components/responses/Error" }
+  /v1/jobs/{job_id}/events:
+    parameters:
+      - $ref: "#/components/parameters/JobID"
+    get:
+      summary: Stream job events (SSE)
+      responses:
+        "200":
+          description: text/event-stream of Event objects
+          content:
+            text/event-stream:
+              schema:
+                $ref: "#/components/schemas/Event"
+  /v1/sandbox/sessions:
+    post:
+      summary: Create a sandbox session (alias over mcp.test)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SandboxRequest"
+      responses:
+        "202":
+          description: Accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SandboxResponse"
+  /v1/sandbox/sessions/{session_id}:
+    parameters:
+      - $ref: "#/components/parameters/SessionID"
+    get:
+      summary: Read a sandbox session
+      responses:
+        "200": { description: OK }
+        "404": { $ref: "#/components/responses/Error" }
+    delete:
+      summary: Delete a sandbox session
+      responses:
+        "200": { description: OK }
+        "404": { $ref: "#/components/responses/Error" }
+  /v1/sandbox/sessions/{session_id}/events:
+    parameters:
+      - $ref: "#/components/parameters/SessionID"
+    get:
+      summary: Stream sandbox events (SSE)
+      responses:
+        "200":
+          description: text/event-stream of Event objects
+  /v1/sandbox/sessions/{session_id}/tools:
+    parameters:
+      - $ref: "#/components/parameters/SessionID"
+    get:
+      summary: List tools advertised by the sandbox's MCP server
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tools:
+                    type: array
+                    items: { $ref: "#/components/schemas/Tool" }
+        "409": { $ref: "#/components/responses/Error" }
+  /v1/sandbox/sessions/{session_id}/tools/call:
+    parameters:
+      - $ref: "#/components/parameters/SessionID"
+    post:
+      summary: Call a tool in the sandbox
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string }
+                arguments: { type: object, additionalProperties: true }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                  result: { type: object, additionalProperties: true }
+        "409": { $ref: "#/components/responses/Error" }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+  parameters:
+    JobID:
+      name: job_id
+      in: path
+      required: true
+      schema: { type: string }
+    SessionID:
+      name: session_id
+      in: path
+      required: true
+      schema: { type: string }
+  responses:
+    Error:
+      description: Error
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error: { type: string }
+              status: { type: integer }
+  schemas:
+    ModelProfile:
+      type: object
+      properties:
+        id: { type: string }
+        source_type: { type: string }
+        source_uri: { type: string }
+        provider: { type: string }
+        external_id: { type: string }
+        display_name: { type: string }
+        task: { type: string }
+        library: { type: string }
+        license: { type: string }
+        tags: { type: array, items: { type: string } }
+        status:
+          type: string
+          enum: [profile_only, queued, downloading, installed, attached, ready, failed, gated, incompatible]
+    ModelProfileImport:
+      type: object
+      properties:
+        source_type: { type: string }
+        source_uri: { type: string }
+        provider: { type: string }
+        external_id: { type: string }
+        display_name: { type: string }
+        task: { type: string }
+        library: { type: string }
+        license: { type: string }
+        tags: { type: array, items: { type: string } }
+        metadata: { type: object, additionalProperties: true }
+    ModelInstallation:
+      type: object
+      properties:
+        id: { type: string }
+        model_profile_id: { type: string }
+        runtime_id: { type: string }
+        install_mode: { type: string }
+        serving_engine: { type: string }
+        status:
+          type: string
+          enum: [queued, checking, downloading, verifying, attached, ready, failed]
+        progress: { type: integer }
+        local_path: { type: string }
+        model_name: { type: string }
+        provider: { type: string }
+        job_id: { type: string }
+    AuthUser:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        email: { type: string }
+        role: { type: string, example: Owner }
+        workspace: { type: string }
+        workspace_slug: { type: string }
+        workspace_id: { type: string }
+    AuthResult:
+      type: object
+      properties:
+        token: { type: string, description: Session bearer token }
+        user: { $ref: "#/components/schemas/AuthUser" }
+    Capabilities:
+      type: object
+      properties:
+        capabilities:
+          type: array
+          items: { type: string }
+          example: [mcp.test, mcp.run, model.inspect, model.pull, agent.run, tool.run]
+        runtimes:
+          type: object
+          properties:
+            node: { type: boolean }
+            python: { type: boolean }
+            ollama: { type: boolean }
+            vllm: { type: boolean }
+            sglang: { type: boolean }
+        limits:
+          type: object
+          properties:
+            max_ttl_seconds: { type: integer }
+            max_concurrent_jobs: { type: integer }
+    CreateJobRequest:
+      type: object
+      required: [type]
+      properties:
+        type:
+          type: string
+          enum: [mcp.test, mcp.run, model.inspect, model.pull, model.preload, agent.run, tool.run]
+        ttl_seconds: { type: integer, example: 600 }
+        payload:
+          type: object
+          additionalProperties: true
+    CreateJobResponse:
+      type: object
+      properties:
+        job_id: { type: string }
+        status: { type: string }
+        events_url: { type: string }
+    Job:
+      type: object
+      properties:
+        job_id: { type: string }
+        type: { type: string }
+        status:
+          type: string
+          enum: [queued, running, complete, error, expired, cancelled]
+        created_at: { type: string, format: date-time }
+        expires_at: { type: string, format: date-time }
+        result: { nullable: true }
+        error: { type: string }
+    Event:
+      type: object
+      properties:
+        step: { type: string }
+        status:
+          type: string
+          enum: [queued, start, ok, error, running, expired, cancelled, complete]
+        message: { type: string }
+        data: { type: object, additionalProperties: true }
+    SandboxRequest:
+      type: object
+      required: [start_command]
+      properties:
+        entity_id: { type: string }
+        ttl_seconds: { type: integer }
+        runtime: { type: string, example: node }
+        transport: { type: string, example: stdio }
+        start_command: { type: string }
+        env:
+          type: object
+          additionalProperties: { type: string }
+    SandboxResponse:
+      type: object
+      properties:
+        session_id: { type: string }
+        job_id: { type: string }
+        status: { type: string }
+        expires_at: { type: string, format: date-time }
+        events_url: { type: string }
+    Tool:
+      type: object
+      properties:
+        name: { type: string }
+        description: { type: string }
+        input_schema: { type: object, additionalProperties: true }

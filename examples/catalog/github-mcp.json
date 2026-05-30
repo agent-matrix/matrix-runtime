@@ -1,0 +1,14 @@
+{
+  "id": "mcp_server:github",
+  "name": "GitHub MCP Server",
+  "kind": "MCP Server",
+  "runtime": "node",
+  "transport": "stdio",
+  "sandbox": true,
+  "secrets": true,
+  "start_command": "npx -y @modelcontextprotocol/server-github",
+  "source": "@modelcontextprotocol/server-github",
+  "license": "MIT",
+  "desc": "Browse repos, issues and PRs. Requires GITHUB_TOKEN in the job env.",
+  "env": { "GITHUB_PERSONAL_ACCESS_TOKEN": "<your-token>" }
+}
