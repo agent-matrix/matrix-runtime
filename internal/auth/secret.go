@@ -4,16 +4,20 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
+	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
 	"errors"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 // SecretBox encrypts small secrets (e.g. BYO provider tokens) at rest with
-// AES-256-GCM. The key is loaded from MATRIXCLOUD_SECRET_KEY (hex or base64, 32
-// bytes) or generated once and persisted to <dir>/secret.key (mode 0600).
+// AES-256-GCM. The key comes from MATRIXCLOUD_SECRET_KEY (ideally 32 bytes as
+// hex or base64; any other non-empty value is accepted and stretched to 32
+// bytes via SHA-256), or is generated once and persisted to <dir>/secret.key
+// (mode 0600).
 type SecretBox struct {
 	gcm cipher.AEAD
 }
@@ -36,18 +40,24 @@ func LoadSecretBox(dir string) (*SecretBox, error) {
 }
 
 func loadOrCreateKey(dir string) ([]byte, error) {
-	if env := os.Getenv("MATRIXCLOUD_SECRET_KEY"); env != "" {
+	if env := strings.TrimSpace(os.Getenv("MATRIXCLOUD_SECRET_KEY")); env != "" {
+		// Preferred: an exact 32-byte key as hex (64 chars) or base64 (44 chars).
 		if b, err := hex.DecodeString(env); err == nil && len(b) == 32 {
 			return b, nil
 		}
-		if b, err := base64.StdEncoding.DecodeString(env); err == nil && len(b) == 32 {
-			return b, nil
+		for _, enc := range []*base64.Encoding{base64.StdEncoding, base64.RawStdEncoding, base64.URLEncoding, base64.RawURLEncoding} {
+			if b, err := enc.DecodeString(env); err == nil && len(b) == 32 {
+				return b, nil
+			}
 		}
-		return nil, errors.New("MATRIXCLOUD_SECRET_KEY must be 32 bytes (hex or base64)")
+		// Fallback: derive a stable 32-byte key from any other value (e.g. a
+		// passphrase) so a non-conforming secret never breaks startup.
+		sum := sha256.Sum256([]byte(env))
+		return sum[:], nil
 	}
 	path := filepath.Join(dir, "secret.key")
 	if b, err := os.ReadFile(path); err == nil {
-		if raw, err := hex.DecodeString(string(b)); err == nil && len(raw) == 32 {
+		if raw, err := hex.DecodeString(strings.TrimSpace(string(b))); err == nil && len(raw) == 32 {
 			return raw, nil
 		}
 	}
