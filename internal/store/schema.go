@@ -180,4 +180,32 @@ CREATE TABLE IF NOT EXISTS audit_events (
     created_at   TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_audit_workspace ON audit_events(workspace_id, created_at);
+
+-- Durable Agent-Matrix workflow execution. Matrix OS owns global cognition;
+-- Runtime persists execution state and append-only transition events.
+CREATE TABLE IF NOT EXISTS workflow_runs (
+    id            TEXT PRIMARY KEY,
+    workspace_id  TEXT NOT NULL,
+    trace_id      TEXT NOT NULL,
+    plan_id       TEXT NOT NULL DEFAULT '',
+    graph_id      TEXT NOT NULL DEFAULT '',
+    status        TEXT NOT NULL DEFAULT 'queued',
+    checkpoint    TEXT NOT NULL DEFAULT '',
+    created_at    TEXT NOT NULL,
+    updated_at    TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_workflow_runs_workspace ON workflow_runs(workspace_id, updated_at);
+
+CREATE TABLE IF NOT EXISTS workflow_events (
+    id            TEXT PRIMARY KEY,
+    run_id        TEXT NOT NULL REFERENCES workflow_runs(id) ON DELETE CASCADE,
+    seq           INTEGER NOT NULL,
+    event_type    TEXT NOT NULL,
+    from_status   TEXT NOT NULL DEFAULT '',
+    to_status     TEXT NOT NULL DEFAULT '',
+    payload_json  TEXT NOT NULL DEFAULT '{}',
+    created_at    TEXT NOT NULL,
+    UNIQUE(run_id, seq)
+);
+CREATE INDEX IF NOT EXISTS idx_workflow_events_run ON workflow_events(run_id, seq);
 `

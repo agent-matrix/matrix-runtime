@@ -48,7 +48,7 @@ type Store struct {
 var pgTables = []string{
 	"model_runtime_installations", "runtime_join_tokens", "provider_credentials",
 	"email_verifications", "password_resets", "model_profiles", "usage_events",
-	"audit_events", "workspaces", "sessions", "runtimes", "users",
+	"audit_events", "workflow_events", "workflow_runs", "workspaces", "sessions", "runtimes", "users",
 }
 
 func compileTableRe() *regexp.Regexp {

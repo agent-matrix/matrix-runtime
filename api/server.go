@@ -87,6 +87,15 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /v1/jobs/{job_id}/events", s.handleJobEvents)
 	mux.HandleFunc("DELETE /v1/jobs/{job_id}", s.handleDeleteJob)
 
+	// Durable Agent-Matrix workflow execution (Matrix OS is global authority).
+	mux.HandleFunc("POST /v1/workflows", s.handleCreateWorkflow)
+	mux.HandleFunc("GET /v1/workflows/{run_id}", s.handleGetWorkflow)
+	mux.HandleFunc("GET /v1/workflows/{run_id}/events", s.handleWorkflowEvents)
+	mux.HandleFunc("POST /v1/workflows/{run_id}/transition", s.handleWorkflowTransition)
+	mux.HandleFunc("POST /v1/workflows/{run_id}/resume", s.handleWorkflowResume)
+	mux.HandleFunc("POST /v1/workflows/{run_id}/cancel", s.handleWorkflowCancel)
+	mux.HandleFunc("POST /v1/workflows/{run_id}/rollback", s.handleWorkflowRollback)
+
 	mux.HandleFunc("POST /v1/sandbox/sessions", s.handleCreateSandbox)
 	mux.HandleFunc("GET /v1/sandbox/sessions/{session_id}", s.handleGetSandbox)
 	mux.HandleFunc("GET /v1/sandbox/sessions/{session_id}/events", s.handleSandboxEvents)
